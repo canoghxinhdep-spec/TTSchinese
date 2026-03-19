@@ -2,18 +2,18 @@ import streamlit as st
 import edge_tts
 import asyncio
 
-st.set_page_config(page_title="Chinese Pro TTS", page_icon="🎙️")
-st.title("🎙️ Chinese Pro TTS - Giọng Nữ Chuẩn")
+st.set_page_config(page_title="Hán Ngữ Engine", layout="centered")
+st.title("🎙️ Cỗ Máy Phát Âm Hán Ngữ 0.5")
 
-# Cấu hình cứng theo yêu cầu của bạn
+# Thiết lập cố định để đạt độ chuẩn như Gemini 2.0
 VOICE = "zh-CN-XiaoxiaoNeural"
-RATE = "-50%"  # Tốc độ 0.5
-PITCH = "+5Hz" # Giúp âm thanh thanh thoát, rõ chữ
+RATE = "-50%"  # Tốc độ chậm để luyện tai
+PITCH = "+5Hz" # Tăng độ thanh để không bị bẹt âm
 
-text_input = st.text_area("Dán Hán tự vào đây (Dùng dấu 。 để ngắt nghỉ):", height=250)
+text_input = st.text_area("Dán Hán tự vào đây (Dấu 。 để nghỉ 1 giây):", height=200)
 
 async def generate_audio(text):
-    # Sử dụng SSML chuyên nghiệp để điều khiển AI
+    # Ép AI nhận diện chuẩn tiếng Trung và ngắt nghỉ theo dấu chấm
     ssml_text = f"""
     <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='zh-CN'>
         <voice name='{VOICE}'>
@@ -30,10 +30,7 @@ async def generate_audio(text):
             audio_data += chunk["data"]
     return audio_data
 
-if st.button("🔊 PHÁT ÂM CHUẨN 0.5"):
+if st.button("▶️ CHẠY MÁY"):
     if text_input.strip():
-        with st.spinner('AI đang xử lý giọng đọc...'):
-            audio = asyncio.run(generate_audio(text_input))
-            st.audio(audio)
-    else:
-        st.warning("Bạn chưa nhập nội dung!")
+        audio = asyncio.run(generate_audio(text_input))
+        st.audio(audio)
