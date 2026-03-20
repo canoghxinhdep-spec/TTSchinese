@@ -1,27 +1,35 @@
 import streamlit as st
 import edge_tts
 import asyncio
+import re
+import unicodedata
 
-st.set_page_config(page_title="Hán Ngữ Engine Pro", layout="centered")
-st.title("🎙️ Cỗ Máy Phát Âm Hán Ngữ 0.5")
+st.set_page_config(page_title="Hán Ngữ Engine Sạch", layout="centered")
+st.title("🎙️ Cỗ Máy Phát Âm Hán Ngữ 0.5 (Auto-Clean)")
 
-# Thông số vàng: Giọng Xiaoxiao, Tốc độ 0.5, Pitch +8Hz (Giúp âm thanh thanh thoát)
 VOICE = "zh-CN-XiaoxiaoNeural"
 RATE = "-50%" 
-PITCH = "+8Hz" 
+PITCH = "+5Hz"
 
-text_input = st.text_area("Dán thuần chữ Hán vào đây (Dùng dấu 。để nghỉ 1 giây):", height=200)
+text_input = st.text_area("Dán nội dung vào đây (App sẽ tự động 'rửa' sạch rác):", height=200)
 
 async def generate_audio(text):
     if not text.strip(): return None
     
-    # Kỹ thuật: Chỉ thay dấu chấm bằng lệnh nghỉ, KHÔNG chia nhỏ văn bản.
-    # AI sẽ nhận diện được từ ghép và đọc tròn vành rõ chữ.
+    # BƯỚC 1: "RỬA" VĂN BẢN - Loại bỏ định dạng ẩn và chuẩn hóa Unicode
+    text = unicodedata.normalize('NFKC', text)
+    
+    # BƯỚC 2: CHỈ GIỮ CHỮ HÁN VÀ DẤU CHẤM TRUNG QUỐC
+    clean_text = "".join(re.findall(r'[\u4e00-\u9fff。]', text))
+    
+    if not clean_text: return None
+
+    # BƯỚC 3: ÉP ĐỌC THEO CỤM (NGÔN NGỮ) KHÔNG ĐÁNH VẦN
     ssml_text = f"""
     <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='zh-CN'>
         <voice name='{VOICE}'>
             <prosody rate='{RATE}' pitch='{PITCH}'>
-                {text.replace("。", " <break time='1000ms'/> ")}
+                <p>{clean_text.replace("。", " <break time='1000ms'/> ")}</p>
             </prosody>
         </voice>
     </speak>
@@ -33,6 +41,10 @@ async def generate_audio(text):
             audio_data += chunk["data"]
     return audio_data
 
-if st.button("▶️ PHÁT ÂM CHUẨN"):
-    audio = asyncio.run(generate_audio(text_input))
-    if audio: st.audio(audio)
+if st.button("▶️ CHẠY MÁY (PHÁT ÂM CHUẨN)"):
+    with st.spinner('Đang thanh lọc dữ liệu...'):
+        audio = asyncio.run(generate_audio(text_input))
+        if audio:
+            st.audio(audio)
+        else:
+            st.error("Không tìm thấy chữ Hán hợp lệ!")
